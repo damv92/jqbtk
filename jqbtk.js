@@ -6,16 +6,18 @@
         var settings = $.extend({
             keyboardLayout: [
                 [
-                    ['1', '1'],
-                    ['2', '2'],
-                    ['3', '3'],
-                    ['4', '4'],
-                    ['5', '5'],
-                    ['6', '6'],
-                    ['7', '7'],
-                    ['8', '8'],
-                    ['9', '9'],
-                    ['0', '0'],
+					['@', '|'],
+                    ['1', '!'],
+                    ['2', '"'],
+                    ['3', '#'],
+                    ['4', '$'],
+                    ['5', '%'],
+                    ['6', '&'],
+                    ['7', '/'],
+                    ['8', '('],
+                    ['9', ')'],
+                    ['0', '='],
+                    ['\'', '?'],
                     ['del', 'del']
                 ],
                 [
@@ -29,10 +31,11 @@
                     ['i', 'I'],
                     ['o', 'O'],
                     ['p', 'P'],
-                    ['-', '='],
-                    ['_', '+']
+                    ['`', '~'],
+                    ['+', '*']
                 ],
                 [
+                    ['aA', 'Aa'],
                     ['a', 'A'],
                     ['s', 'S'],
                     ['d', 'D'],
@@ -42,11 +45,12 @@
                     ['j', 'J'],
                     ['k', 'K'],
                     ['l', 'L'],
-                    ['\'', ':'],
-                    ['@', ';'],
-                    ['#', '~']
+                    ['ñ', 'Ñ'],
+                    ['{', '}'],
+                    ['[', ']']
                 ],
                 [
+                    ['<', '>'],
                     ['z', 'Z'],
                     ['x', 'X'],
                     ['c', 'C'],
@@ -54,9 +58,10 @@
                     ['b', 'B'],
                     ['n', 'N'],
                     ['m', 'M'],
-                    [',', ','],
-                    ['.', '.'],
-                    ['?', '!']
+                    [',', ';'],
+                    ['.', ':'],
+                    ['-', '_'],
+                    ['^', '\\']
                 ],
                 [
                     ['shift', 'shift'],
@@ -129,80 +134,80 @@
         }
         // Keep track of shift status
         var keyboardShift = false;
+		var keyboardBloqMayus = false;
+		
+		function getKeyboardShift(){
+			return keyboardShift || keyboardBloqMayus;
+		}
 
         // Listen for keypresses
         var onKeypress = function(e) {
             $(this).addClass(settings.btnActiveClasses);
-            var keyContent = $(this).attr('data-value' + (keyboardShift ? '-alt' : ''));
+            var keyContent = $(this).attr('data-value' + (getKeyboardShift() ? '-alt' : ''));
             var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            var currentContent = parent.val();
+            var txt = parent.val();
+			var selStart = parent[0].selectionStart;
+			var selEnd = parent[0].selectionEnd;
+			var currentContent = txt.slice(0, selStart);
             switch (keyContent) {
                 case 'space':
                     currentContent += ' ';
+					selStart++;
                     break;
                 case 'shift':
                     keyboardShift = !keyboardShift;
-                    keyboardShiftify();
                     break;
                 case 'del':
+					selStart--;
                     currentContent = currentContent.substr(0, currentContent.length - 1);
                     break;
-                case 'enter':
-                    parent.closest('form').submit();
+                case 'clr':
+					currentContent = '';
+					txt = '';
+					break;
+				case 'ok':
+					return true;
+                case 'aA':
+                    keyboardBloqMayus = true;
+                    break;
+                case 'Aa':
+                    keyboardBloqMayus = false;
                     break;
                 default:
                     currentContent += keyContent;
+					selStart++;
                     keyboardShift = false;
             }
-            parent.val(currentContent);
+            parent.val(currentContent + txt.slice(selEnd, txt.length));
             keyboardShiftify();
+			$(this).removeClass(settings.btnActiveClasses);
             parent.focus();
+			parent[0].selectionStart = selStart;
+			parent[0].selectionEnd = selStart;
         };
         $(document).off('touchstart', '.jqbtk-row .btn');
         $(document).on('touchstart', '.jqbtk-row .btn', onKeypress);
 
         $(document).off('mousedown', '.jqbtk-row .btn');
         $(document).on('mousedown', '.jqbtk-row .btn',function(e){
-            onKeypress.bind(this,e)();
+            var close = onKeypress.bind(this,e)();
+			if (close === true) return;
             var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            parent.focus();
             e.preventDefault();
         });
 
-        // All those trouble just to prevent clicks on the popover from cancelling the focus
-        $(document).off('mouseup', '.jqbtk-row .btn');
-        $(document).on('mouseup', '.jqbtk-row .btn',function(e){
-            $(this).removeClass(settings.btnActiveClasses);
-            var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            parent.focus();
-        });
-
-        $(document).on('click', '.jqbtk-row .btn',function(e){
-            var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            parent.focus();
-        });
-        $(document).on('touchend', '.jqbtk-row .btn', function() {
-            $(this).removeClass(settings.btnActiveClasses);
-            var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            parent.focus();
-        });
-        $(document).on('touchend', '.jqbtk-row', function(e) {
-            e.preventDefault();
-            var parent = $('[aria-describedby=' + $(this).closest('.popover').attr('id') + ']');
-            parent.focus();
-
-        });
         // Update keys according to shift status
         var keyboardShiftify = function() {
             $('.jqbtk-container .btn').each(function() {
                 switch ($(this).attr('data-value')) {
                     case 'shift':
                     case 'del':
+                    case 'ok':
+                    case 'clr':
                     case 'space':
-                    case 'enter':
                         break;
                     default:
-                        $(this).text($(this).attr('data-value' + (keyboardShift ? '-alt' : '')));
+                        $(this).text($(this).attr('data-value' + (getKeyboardShift() ? '-alt' : '')));
                 }
             });
         };
@@ -223,6 +228,7 @@
                     if (settings.initCaps && $(this).val().length === 0) {
                         keyboardShift = true;
                     }
+					keyboardBloqMayus = false;
                     // Set up container
                     var content = $('<div class="jqbtk-container" tabIndex="-1">');
                     $.each(settings.layout, function() {
@@ -242,15 +248,21 @@
                                     btn.addClass('jqbtk-del').html('<span class="glyphicon glyphicon-arrow-left"></span>');
                                     break;
                                 case 'enter':
-                                    btn.addClass('jqbtk-enter').html('Enter');
+                                    btn.addClass('jqbtk-enter').html('Intro');
                                     break;
                                 default:
-                                    btn.text(btn.attr('data-value' + (keyboardShift ? '-alt' : '')));
+                                    btn.text(btn.attr('data-value' + (getKeyboardShift() ? '-alt' : '')));
                             }
                             lineContent.append(btn);
                         });
                         content.append(lineContent);
                     });
+					var lineContentOk = $('<div class="jqbtk-row">');
+					var btnOk = $(settings.btnTpl).addClass(settings.btnClasses).addClass('jqbtk-ok btn-success').attr('data-value', 'ok').attr('data-value-alt', 'ok').text('Ok');
+					var btnClr = $(settings.btnTpl).addClass(settings.btnClasses).addClass('jqbtk-ok btn-danger').attr('data-value', 'clr').attr('data-value-alt', 'clr').text('Clear');
+					lineContentOk.append(btnOk);
+					lineContentOk.append(btnClr);
+					content.append(lineContentOk);
                     return content;
                 },
                 html: true,

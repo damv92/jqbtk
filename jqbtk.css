@@ -4,7 +4,7 @@
 .jqbtk-container .btn {
 	font-size: 1.5em;
 	width: 2.2em;
-	height: 2em;
+	max-height: 2em;
 	text-align: center;
 	margin: 2px;
 }
@@ -14,7 +14,7 @@
 .jqbtk-container .jqbtk-shift {
 	width: 4.4em;
 }
-.jqbtk-container .jqbtk-enter {
+.jqbtk-container .jqbtk-ok {
 	width: 4em;
 }
 .popover {
